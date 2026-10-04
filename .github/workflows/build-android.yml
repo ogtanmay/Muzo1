@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build Android APK & Bundle
     runs-on: ubuntu-latest
 
     steps:
@@ -25,14 +25,24 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Gradle Cache
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          cache-read-only: false
+      - name: Generate Keystore on first run
+        run: |
+          if [ ! -f debug.keystore ]; then
+            echo "Generating debug.keystore for APK signing..."
+            keytool -genkeypair -v \
+              -keystore debug.keystore \
+              -alias androiddebugkey \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass android \
+              -keypass android \
+              -dname "CN=Android Debug, O=Android, C=US"
+          else
+            echo "debug.keystore already exists."
+          fi
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -40,21 +50,24 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: Upload Debug APK Artifact
+      - name: Build Release APK & Bundle
+        run: |
+          ./gradlew assembleRelease bundleRelease --stacktrace || ./gradlew assembleRelease --stacktrace || true
+
+      - name: Upload APKs (Debug & Release)
         uses: actions/upload-artifact@v4
         with:
-          name: muzo-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: muzo-apks
+          path: |
+            app/build/outputs/apk/**/*.apk
           retention-days: 30
 
-      - name: Build Release Bundle (AAB)
-        run: ./gradlew bundleRelease --stacktrace || echo "Release bundle skipped if signing keys are not provided"
-
-      - name: Upload Release Bundle (if built)
+      - name: Upload Release Bundle (AAB)
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: muzo-release-bundle
-          path: app/build/outputs/bundle/release/*.aab
+          path: |
+            app/build/outputs/bundle/**/*.aab
           if-no-files-found: ignore
           retention-days: 30
