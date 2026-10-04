@@ -93,15 +93,17 @@ fun MuzoApp() {
     }
 
     MuzoTheme(themeMode = themeMode) {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            contentWindowInsets = WindowInsets.systemBars
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
+        AmbientLiquidBackdrop {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                contentWindowInsets = WindowInsets.systemBars
+            ) { innerPadding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
                 // Main Content area
                 if (activeDetailPlaylist != null) {
                     val (title, songs, playlistId) = activeDetailPlaylist!!
@@ -127,7 +129,11 @@ fun MuzoApp() {
                             currentSong = currentSong,
                             isPlaying = isPlaying,
                             favoriteIds = favoriteIds,
+                            favorites = favorites,
+                            history = history,
+                            playlists = playlists,
                             userDisplayName = userState.displayName,
+                            userPhotoUrl = userState.photoUrl,
                             onPlaySong = { song, list -> playerManager.playSong(song, list) },
                             onToggleFavorite = { localStore.toggleFavorite(it) },
                             onAddToPlaylist = { songForAddToPlaylist = it },
@@ -304,6 +310,7 @@ fun MuzoApp() {
                     }
                 }
             )
+        }
         }
     }
 }

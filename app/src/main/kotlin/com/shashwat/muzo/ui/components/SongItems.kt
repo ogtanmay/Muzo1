@@ -1,6 +1,7 @@
 package com.shashwat.muzo.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -26,6 +28,7 @@ import coil.compose.AsyncImage
 import com.shashwat.muzo.data.model.MuzoItem
 import com.shashwat.muzo.ui.theme.MuzoCyan
 import com.shashwat.muzo.ui.theme.MuzoPink
+import com.shashwat.muzo.ui.theme.MuzoPurple
 
 @Composable
 fun SongListItem(
@@ -39,28 +42,66 @@ fun SongListItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    Surface(
+    val glassBackground = if (isPlaying) {
+        Brush.linearGradient(
+            listOf(
+                MuzoCyan.copy(alpha = 0.22f),
+                MuzoPurple.copy(alpha = 0.16f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            listOf(
+                Color.White.copy(alpha = 0.08f),
+                Color.White.copy(alpha = 0.02f)
+            )
+        )
+    }
+
+    val glassBorder = if (isPlaying) {
+        Brush.linearGradient(
+            listOf(
+                MuzoCyan.copy(alpha = 0.7f),
+                MuzoPurple.copy(alpha = 0.4f)
+            )
+        )
+    } else {
+        Brush.linearGradient(
+            listOf(
+                Color.White.copy(alpha = 0.22f),
+                Color.White.copy(alpha = 0.05f)
+            )
+        )
+    }
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .shadow(
+                elevation = if (isPlaying) 12.dp else 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = if (isPlaying) MuzoCyan.copy(alpha = 0.4f) else Color.Transparent,
+                spotColor = if (isPlaying) MuzoPurple.copy(alpha = 0.4f) else Color.Transparent
+            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(glassBackground)
+            .border(1.dp, glassBorder, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .testTag("song_item_${song.id}"),
-        color = if (isPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp)
+            .testTag("song_item_${song.id}")
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(52.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
             ) {
                 AsyncImage(
                     model = song.displayThumbnail,
@@ -72,7 +113,7 @@ fun SongListItem(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f)),
+                            .background(Color.Black.copy(alpha = 0.45f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -85,42 +126,33 @@ fun SongListItem(
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = song.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isPlaying) MuzoCyan else MaterialTheme.colorScheme.onSurface,
+                    color = if (isPlaying) MuzoCyan else Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = song.displayArtist,
+                    text = "${song.displayArtist}${song.duration?.let { " • $it" } ?: ""}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color.White.copy(alpha = 0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            if (!song.duration.isNullOrEmpty()) {
-                Text(
-                    text = song.duration,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
 
             IconButton(onClick = onToggleFavorite) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                    tint = if (isFavorite) MuzoPink else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                    modifier = Modifier.size(20.dp)
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) MuzoPink else Color.White.copy(alpha = 0.60f),
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -128,27 +160,21 @@ fun SongListItem(
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
                         Icons.Default.MoreVert,
-                        contentDescription = "More options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                        contentDescription = "Options",
+                        tint = Color.White.copy(alpha = 0.60f),
+                        modifier = Modifier.size(22.dp)
                     )
                 }
+
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Add to Playlist") },
+                        text = { Text("Add to playlist") },
                         onClick = {
                             showMenu = false
                             onAddToPlaylist()
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (isFavorite) "Unlike" else "Like") },
-                        onClick = {
-                            showMenu = false
-                            onToggleFavorite()
                         }
                     )
                 }
@@ -164,25 +190,44 @@ fun SongCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    val glassBorder = if (isPlaying) {
+        Brush.linearGradient(
+            listOf(MuzoCyan, MuzoPurple)
+        )
+    } else {
+        Brush.linearGradient(
+            listOf(Color.White.copy(alpha = 0.35f), Color.White.copy(alpha = 0.10f))
+        )
+    }
+
+    Box(
         modifier = modifier
-            .width(148.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .width(150.dp)
+            .shadow(
+                elevation = if (isPlaying) 16.dp else 8.dp,
+                shape = RoundedCornerShape(20.dp),
+                ambientColor = if (isPlaying) MuzoCyan.copy(alpha = 0.4f) else MuzoPurple.copy(alpha = 0.25f),
+                spotColor = MuzoPurple.copy(alpha = 0.35f)
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.10f),
+                        Color.White.copy(alpha = 0.03f)
+                    )
+                )
+            )
+            .border(1.dp, glassBorder, RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
-            .testTag("song_card_${song.id}"),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-        shape = RoundedCornerShape(16.dp)
+            .padding(8.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
+        Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(14.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 AsyncImage(
@@ -203,7 +248,7 @@ fun SongCard(
                             Icons.Default.PlayArrow,
                             contentDescription = "Playing",
                             tint = MuzoCyan,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(36.dp)
                         )
                     }
                 }
@@ -213,91 +258,17 @@ fun SongCard(
 
             Text(
                 text = song.title,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp),
-                fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (isPlaying) MuzoCyan else MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isPlaying) MuzoCyan else Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-
-            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
                 text = song.displayArtist,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-@Composable
-fun PlaylistCard(
-    title: String,
-    subtitle: String,
-    thumbnailUrl: String?,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .width(156.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (!thumbnailUrl.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = thumbnailUrl,
-                        contentDescription = title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text = title.take(2).uppercase(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = Color.White
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(fontSize = 14.sp),
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.65f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
