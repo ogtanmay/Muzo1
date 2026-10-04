@@ -1,0 +1,6 @@
+{
+  "name": "Muzo",
+  "description": "Stream and discover music, search YouTube Music songs, synced lyrics, and manage custom playlists.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
